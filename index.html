@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hitung Poin OPR Free Fire</title>
+<style>
+:root{
+  --bg:#EAEEF6; --surface:#FFFFFF; --ink:#14183A; --muted:#5B6285; --line:#D3D9E8;
+  --flame:#E8490F; --flame-ink:#FFFFFF; --warn:#B3261E; --soft:#F3F5FB;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    color-scheme:dark;
+    --bg:#0E1124; --surface:#171B35; --ink:#ECEFFA; --muted:#9AA2C6; --line:#2A3058;
+    --flame:#FF7A3D; --flame-ink:#14183A; --warn:#FF8A80; --soft:#1D2242;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.45;-webkit-text-size-adjust:100%}
+.wrap{max-width:760px;margin:0 auto;padding:20px 14px 60px}
+h1{font-size:2.1rem;line-height:1;margin:6px 0 4px;font-weight:900;letter-spacing:-.02em}
+.sub{color:var(--muted);margin:0 0 20px;font-size:.95rem}
+section,details{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
+h2{font-size:1.05rem;margin:0 0 12px;font-weight:800}
+summary{font-weight:800;font-size:1.05rem;cursor:pointer}
+details[open] summary{margin-bottom:12px}
+button{font:inherit;cursor:pointer;border-radius:10px;border:1px solid var(--line);background:var(--soft);color:var(--ink);padding:9px 14px;font-weight:600}
+button.primary{background:var(--flame);color:var(--flame-ink);border-color:var(--flame)}
+button:disabled{opacity:.6;cursor:wait}
+button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-visible{outline:3px solid var(--flame);outline-offset:2px}
+input[type=text],input[type=number],textarea{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:9px 10px;width:100%}
+textarea{resize:vertical;min-height:84px}
+input[type=number]{text-align:center;font-variant-numeric:tabular-nums}
+.empty{color:var(--muted);margin:0}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.hint{font-size:.85rem;color:var(--muted);margin:8px 0 0}
+.scanmsg{margin:10px 0 0;font-size:.9rem;color:var(--muted)}
+.out{margin-top:12px}
+.chk{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:.92rem}
+
+/* Tabel hasil, mirip lembar kerja */
+.sheetwrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:#fff}
+table.sheet{border-collapse:collapse;width:100%;color:#000;font-size:.86rem;font-variant-numeric:tabular-nums}
+.sheet th,.sheet td{border:1px solid #000;padding:5px 8px;text-align:center;white-space:nowrap}
+.sheet .g,.sheet .no{background:#D9D9D9;font-weight:700}
+.sheet .no{font-weight:400}
+.sheet .y{background:#FFFF00;font-weight:700}
+.sheet .b{background:#00B0F0;font-weight:700}
+.sheet .o{background:#F4B183}
+.sheet .o2{background:#F8CBAD}
+.sheet .p{background:#FBE5D6;font-weight:700}
+
+/* Input match */
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.tabs button[aria-selected=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.namerow{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.namerow label{font-weight:700;white-space:nowrap}
+.mhead,.mrow{display:grid;grid-template-columns:1fr 64px 64px 52px;gap:8px;align-items:center}
+.mhead{font-size:.8rem;color:var(--muted);padding-bottom:6px;font-weight:600}
+.mhead span:not(:first-child){text-align:center}
+.mrow{padding:5px 0;border-top:1px solid var(--line)}
+.mrow .nm{font-weight:600;overflow-wrap:anywhere}
+.mrow .pt{text-align:center;font-weight:900;font-variant-numeric:tabular-nums;font-size:1.05rem}
+.mrow input{padding:8px 4px}
+.mrow input.dup{border-color:var(--warn);background:color-mix(in srgb,var(--warn) 14%,var(--surface))}
+.note{color:var(--warn);font-size:.88rem;margin:10px 0 0;min-height:1.2em}
+#scanOut{margin-bottom:10px}
+
+/* Tim */
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--soft);border:1px solid var(--line);border-radius:999px;padding:4px 6px 4px 12px;font-size:.9rem}
+.chip button{padding:0 8px;border:0;background:transparent;font-size:1.1rem;line-height:1.5;color:var(--muted)}
+
+/* Aturan */
+.rules{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.rules label{display:block;font-size:.78rem;color:var(--muted);font-weight:600;text-align:center}
+.rules input{margin-top:3px;padding:8px 4px}
+.killrule{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.killrule input{width:72px}
+@media (max-width:380px){.mhead,.mrow{grid-template-columns:1fr 56px 56px 44px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Poin OPR</h1>
+  <p class="sub">Isi rank dan kill tiap tim per map, tabel hasil dan juara langsung terhitung.</p>
+
+  <section aria-labelledby="hBoard">
+    <h2 id="hBoard">Tabel hasil</h2>
+    <input id="evName" type="text" maxlength="60" placeholder="Nama turnamen, misal FAS TOURNAMENT" aria-label="Nama turnamen" style="margin-bottom:12px">
+    <div id="board"></div>
+    <label class="chk"><input type="checkbox" id="sortChk"> Urutkan dari poin tertinggi</label>
+    <div class="actions">
+      <button id="imgBtn" class="primary" type="button">Simpan sebagai gambar</button>
+      <button id="copyBtn" type="button">Salin teks</button>
+    </div>
+    <div id="imgOut"></div>
+    <textarea id="copyOut" class="out" readonly hidden aria-label="Hasil untuk disalin"></textarea>
+  </section>
+
+  <section aria-labelledby="hMatch">
+    <h2 id="hMatch">Input per map</h2>
+    <div class="tabs" id="tabs" role="tablist"></div>
+    <div class="namerow">
+      <label for="mName">Nama map</label>
+      <input id="mName" type="text" maxlength="24" placeholder="Bermuda">
+    </div>
+    <div class="actions" style="margin:0 0 10px">
+      <button id="scanBtn" class="primary" type="button">Baca dari screenshot</button>
+      <input id="scanFile" type="file" accept="image/*" multiple hidden>
+    </div>
+    <div id="scanOut" role="status"></div>
+    <div id="match"></div>
+    <p class="note" id="note" role="status"></p>
+  </section>
+
+  <details id="teamBox" open>
+    <summary>Tim</summary>
+    <textarea id="teamIn" placeholder="Tempel nama tim, satu nama per baris" aria-label="Nama tim"></textarea>
+    <div class="actions"><button id="addTeams" class="primary" type="button">Tambah tim</button></div>
+    <div class="chips" id="chips"></div>
+  </details>
+
+  <details>
+    <summary>Aturan poin</summary>
+    <div class="killrule">
+      <label for="killPt"><b>Poin per kill</b></label>
+      <input id="killPt" type="number" inputmode="decimal" min="0" step="0.5">
+    </div>
+    <p class="hint" style="margin:0 0 8px">Poin placement per rank (P.Rank). Rank di luar 12 dapat 0.</p>
+    <div class="rules" id="rules"></div>
+  </details>
+
+  <div class="actions">
+    <button id="resetBtn" type="button">Reset semua</button>
+  </div>
+</div>
+
+<script>
+const DEFAULT_MAPS = ['Bermuda', 'Purgatory', 'Kalahari', 'Nexterra', 'Solara'];
+const state = {
+  teams: [], nextId: 1,
+  matches: [{}], names: [DEFAULT_MAPS[0]], cur: 0,
+  killPt: 1,
+  place: [12,9,8,7,6,5,4,3,2,1,0,0]
+};
+const $ = s => document.querySelector(s);
+const esc = s => s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const num = v => { const n = parseInt(v, 10); return isNaN(n) ? 0 : n; };
+const fmt = n => Number.isInteger(n) ? String(n) : n.toFixed(1);
+const mapName = i => (state.names[i] || '').trim() || ('Match ' + (i + 1));
+const pageTitle = () => ($('#evName').value.trim() || 'HASIL OPR').toUpperCase();
+
+function points(rec){
+  if (!rec) return 0;
+  const r = num(rec.rank), k = num(rec.kills);
+  return (r > 0 ? (state.place[r-1] || 0) : 0) + k * state.killPt;
+}
+
+function totals(){
+  return state.teams.map(t => {
+    let total = 0, kills = 0, booyah = 0;
+    state.matches.forEach(m => {
+      const rec = m[t.id]; if (!rec) return;
+      total += points(rec); kills += num(rec.kills);
+      if (num(rec.rank) === 1) booyah++;
+    });
+    return {...t, total, kills, booyah};
+  }).sort((a,b) => b.total-a.total || b.booyah-a.booyah || b.kills-a.kills || a.name.localeCompare(b.name));
+}
+
+/* Baris tabel: urutan tim, P.Rank dan P.Kill per map, total, juara */
+function sheetRows(){
+  const ranked = totals();
+  const juara = {};
+  ranked.forEach((t,i) => { if (t.total > 0 && i < 3) juara[t.id] = i + 1; });
+  const order = $('#sortChk').checked ? ranked : state.teams;
+  return order.map(t => {
+    let total = 0;
+    const per = state.matches.map(m => {
+      const rec = m[t.id];
+      if (!rec) return {pr:'', pk:''};
+      const r = num(rec.rank);
+      const hasK = rec.kills !== '' && rec.kills != null;
+      const pr = r > 0 ? (state.place[r-1] || 0) : '';
+      const pk = hasK ? num(rec.kills) * state.killPt : '';
+      total += (pr === '' ? 0 : pr) + (pk === '' ? 0 : pk);
+      return {pr, pk};
+    });
+    return {id: t.id, name: t.name, per, total, juara: juara[t.id] || ''};
+  });
+}
+
+function renderBoard(){
+  const box = $('#board');
+  if (!state.teams.length){
+    box.innerHTML = '<p class="empty">Belum ada tim. Tambahkan nama tim di bagian Tim di bawah.</p>';
+    return;
+  }
+  const rows = sheetRows();
+  const n = state.matches.length;
+  let h = '<div class="sheetwrap"><table class="sheet"><thead>';
+  h += `<tr><th class="g" rowspan="3">No</th><th class="g" rowspan="3">Nama Tim</th><th class="y" colspan="${n*2}">${esc(pageTitle())}</th><th class="g" rowspan="3">Total Point</th><th class="g" rowspan="3">Juara</th></tr>`;
+  h += '<tr>' + state.matches.map((_,i) => `<th class="b" colspan="2">${esc(mapName(i).toUpperCase())}</th>`).join('') + '</tr>';
+  h += '<tr>' + state.matches.map(() => '<th class="b">P.Rank</th><th class="b">P.Kill</th>').join('') + '</tr></thead><tbody>';
+  rows.forEach((r,i) => {
+    h += `<tr><td class="no">${i+1}</td><td class="y">${esc(r.name)}</td>` +
+      r.per.map(p => `<td class="o">${p.pr === '' ? '' : fmt(p.pr)}</td><td class="o2">${p.pk === '' ? '' : fmt(p.pk)}</td>`).join('') +
+      `<td class="p">${fmt(r.total)}</td><td class="y">${r.juara}</td></tr>`;
+  });
+  box.innerHTML = h + '</tbody></table></div>';
+}
+
+function renderTabs(){
+  $('#tabs').innerHTML = state.matches.map((_,i) =>
+    `<button type="button" role="tab" aria-selected="${i===state.cur}" data-tab="${i}">${esc(mapName(i))}</button>`).join('')
+    + '<button type="button" id="addMatch">+ Map</button>'
+    + (state.matches.length > 1 ? '<button type="button" id="delMatch">Hapus map ini</button>' : '');
+}
+
+function renderMatch(){
+  $('#mName').value = state.names[state.cur] || '';
+  $('#mName').placeholder = 'Match ' + (state.cur + 1);
+  const box = $('#match');
+  if (!state.teams.length){ box.innerHTML = '<p class="empty">Tambahkan tim dulu.</p>'; $('#note').textContent = ''; return; }
+  const m = state.matches[state.cur];
+  box.innerHTML = '<div class="mhead"><span>Tim</span><span>Rank</span><span>Kill</span><span>Poin</span></div>' +
+    state.teams.map(t => {
+      const r = m[t.id] || {rank:'',kills:''};
+      return `<div class="mrow" data-id="${t.id}">
+        <span class="nm">${esc(t.name)}</span>
+        <input class="rk" type="number" inputmode="numeric" min="1" placeholder="-" value="${r.rank}" aria-label="Rank ${esc(t.name)}">
+        <input class="kl" type="number" inputmode="numeric" min="0" placeholder="0" value="${r.kills}" aria-label="Kill ${esc(t.name)}">
+        <span class="pt">${fmt(points(r))}</span></div>`;
+    }).join('');
+  checkDupes();
+}
+
+function checkDupes(){
+  const m = state.matches[state.cur];
+  const seen = {};
+  state.teams.forEach(t => { const r = num((m[t.id]||{}).rank); if (r > 0) (seen[r] = seen[r] || []).push(t.id); });
+  const dupRanks = Object.keys(seen).filter(r => seen[r].length > 1);
+  document.querySelectorAll('#match .mrow').forEach(row => {
+    const r = num((m[row.dataset.id]||{}).rank);
+    row.querySelector('.rk').classList.toggle('dup', r > 0 && seen[r].length > 1);
+  });
+  $('#note').textContent = dupRanks.length ? 'Ada rank kembar di map ini: ' + dupRanks.join(', ') + '. Cek lagi inputnya.' : '';
+}
+
+function renderChips(){
+  $('#chips').innerHTML = state.teams.map(t =>
+    `<span class="chip">${esc(t.name)}<button type="button" data-del="${t.id}" aria-label="Hapus ${esc(t.name)}">&times;</button></span>`).join('');
+}
+
+function renderRules(){
+  $('#killPt').value = state.killPt;
+  $('#rules').innerHTML = state.place.map((p,i) =>
+    `<label>Rank ${i+1}<input type="number" inputmode="decimal" min="0" step="1" data-pl="${i}" value="${p}"></label>`).join('');
+}
+
+function refreshAll(){ renderBoard(); renderChips(); renderTabs(); renderMatch(); }
+
+/* Events */
+$('#match').addEventListener('input', e => {
+  const row = e.target.closest('.mrow'); if (!row) return;
+  const m = state.matches[state.cur];
+  const rec = m[row.dataset.id] = m[row.dataset.id] || {rank:'',kills:''};
+  if (e.target.classList.contains('rk')) rec.rank = e.target.value;
+  if (e.target.classList.contains('kl')) rec.kills = e.target.value;
+  row.querySelector('.pt').textContent = fmt(points(rec));
+  checkDupes(); renderBoard();
+});
+
+$('#mName').addEventListener('input', e => {
+  state.names[state.cur] = e.target.value;
+  renderTabs(); renderBoard();
+});
+$('#evName').addEventListener('input', renderBoard);
+$('#sortChk').addEventListener('change', renderBoard);
+
+$('#tabs').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.tab !== undefined){ state.cur = +b.dataset.tab; renderTabs(); renderMatch(); $('#scanOut').innerHTML = ''; }
+  else if (b.id === 'addMatch'){
+    state.matches.push({});
+    state.names.push(DEFAULT_MAPS[state.matches.length - 1] || '');
+    state.cur = state.matches.length - 1;
+    $('#scanOut').innerHTML = '';
+    refreshAll();
+  }
+  else if (b.id === 'delMatch'){
+    state.matches.splice(state.cur, 1); state.names.splice(state.cur, 1);
+    state.cur = Math.max(0, state.cur - 1);
+    $('#scanOut').innerHTML = '';
+    refreshAll();
+  }
+});
+
+$('#addTeams').addEventListener('click', () => {
+  const names = $('#teamIn').value.split('\n').map(s => s.trim()).filter(Boolean);
+  names.forEach(n => state.teams.push({id: state.nextId++, name: n}));
+  $('#teamIn').value = '';
+  refreshAll();
+});
+
+$('#chips').addEventListener('click', e => {
+  const b = e.target.closest('[data-del]'); if (!b) return;
+  const id = +b.dataset.del;
+  state.teams = state.teams.filter(t => t.id !== id);
+  state.matches.forEach(m => delete m[id]);
+  refreshAll();
+});
+
+$('#killPt').addEventListener('input', e => {
+  const v = parseFloat(e.target.value); state.killPt = isNaN(v) ? 0 : v;
+  renderBoard(); renderMatch();
+});
+$('#rules').addEventListener('input', e => {
+  if (e.target.dataset.pl === undefined) return;
+  const v = parseFloat(e.target.value); state.place[+e.target.dataset.pl] = isNaN(v) ? 0 : v;
+  renderBoard(); renderMatch();
+});
+
+$('#copyBtn').addEventListener('click', async () => {
+  const list = totals();
+  if (!list.length) return;
+  const lines = [pageTitle() + ' (' + state.matches.length + ' map)'].concat(
+    list.map((t,i) => `${i+1}. ${t.name} - ${fmt(t.total)} poin (${t.kills} kill, ${t.booyah} booyah)`));
+  const text = lines.join('\n');
+  const out = $('#copyOut');
+  out.value = text; out.hidden = false;
+  try { await navigator.clipboard.writeText(text); $('#copyBtn').textContent = 'Tersalin'; }
+  catch { out.focus(); out.select(); $('#copyBtn').textContent = 'Salin manual dari kotak'; }
+  setTimeout(() => { $('#copyBtn').textContent = 'Salin teks'; }, 2000);
+});
+
+/* Baca screenshot */
+let pending = [];
+
+async function fileToB64(file){
+  const url = URL.createObjectURL(file);
+  const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = url; });
+  const s = Math.min(1, 1600 / Math.max(img.width, img.height));
+  const c = document.createElement('canvas');
+  c.width = Math.round(img.width * s); c.height = Math.round(img.height * s);
+  c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+  URL.revokeObjectURL(url);
+  return c.toDataURL('image/jpeg', 0.85).split(',')[1];
+}
+
+function showScanMsg(filled){
+  let h = `<p class="scanmsg">${filled} tim terisi dari screenshot. Cek lagi angkanya, hasil bacaan bisa meleset.</p>`;
+  if (pending.length){
+    h += `<p class="scanmsg">${pending.length} nama tidak cocok dengan daftar tim: ${pending.map(p => esc(p.name)).join(', ')}.</p>
+          <div class="actions"><button type="button" id="addPending">Tambah sebagai tim baru</button></div>`;
+  }
+  $('#scanOut').innerHTML = h;
+}
+
+function applyScan(rows){
+  const m = state.matches[state.cur];
+  let filled = 0; pending = [];
+  rows.forEach(r => {
+    const name = String(r.name || '').trim();
+    const rank = num(r.rank), kills = num(r.kills);
+    const t = state.teams.find(t => t.name.toLowerCase() === name.toLowerCase());
+    if (t){ m[t.id] = {rank: rank ? String(rank) : '', kills: String(kills)}; filled++; }
+    else if (name) pending.push({name, rank, kills});
+  });
+  renderMatch(); renderBoard(); showScanMsg(filled);
+}
+
+$('#scanBtn').addEventListener('click', () => $('#scanFile').click());
+
+$('#scanFile').addEventListener('change', async e => {
+  const files = [...e.target.files]; e.target.value = '';
+  if (!files.length) return;
+  const btn = $('#scanBtn'), out = $('#scanOut');
+  btn.disabled = true; out.innerHTML = '<p class="scanmsg">Membaca screenshot...</p>';
+  try {
+    const content = [];
+    for (const f of files) content.push({type:'image', source:{type:'base64', media_type:'image/jpeg', data: await fileToB64(f)}});
+    const names = state.teams.map(t => t.name);
+    content.push({type:'text', text:
+      'These are screenshots of a Free Fire match result. For every team/squad listed, extract: placement rank, team name as shown, and total kills for the team (if kills are shown per player, add them up). ' +
+      (names.length ? 'Registered team names: ' + JSON.stringify(names) + '. If a name in the screenshot clearly refers to one of these (ignore case, small typos, clan tags), use the registered spelling exactly; otherwise use the name as shown. ' : '') +
+      'Respond with ONLY a JSON array like [{"name":"Team A","rank":1,"kills":7}], no other text. If a value is unreadable, use null.'});
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({model: 'claude-sonnet-4-6', max_tokens: 1000, messages: [{role: 'user', content}]})
+    });
+    const data = await res.json();
+    const text = (data.content || []).map(i => i.type === 'text' ? i.text : '').join('');
+    const rows = JSON.parse(text.replace(/```json|```/g, '').trim());
+    if (!Array.isArray(rows) || !rows.length) throw new Error('empty');
+    applyScan(rows);
+  } catch (err) {
+    out.innerHTML = '<p class="scanmsg" style="color:var(--warn)">Gagal membaca screenshot. Pastikan gambarnya jelas, atau isi manual.</p>';
+  } finally { btn.disabled = false; }
+});
+
+$('#scanOut').addEventListener('click', e => {
+  if (e.target.id !== 'addPending') return;
+  const m = state.matches[state.cur];
+  pending.forEach(p => {
+    const id = state.nextId++;
+    state.teams.push({id, name: p.name});
+    m[id] = {rank: p.rank ? String(p.rank) : '', kills: String(p.kills)};
+  });
+  const n = pending.length; pending = [];
+  refreshAll();
+  $('#scanOut').innerHTML = `<p class="scanmsg">${n} tim baru ditambahkan dan diisi. Cek lagi angkanya.</p>`;
+});
+
+/* Tabel jadi gambar */
+const FONT = 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+
+function fitText(x, text, maxW, weight, startSize, minSize){
+  let size = startSize;
+  x.font = `${weight} ${size}px ${FONT}`;
+  while (x.measureText(text).width > maxW && size > minSize){
+    size -= 2; x.font = `${weight} ${size}px ${FONT}`;
+  }
+  while (x.measureText(text).width > maxW && text.length > 1) text = text.slice(0, -2) + '…';
+  return text;
+}
+
+function drawSheet(){
+  const rows = sheetRows();
+  const n = state.matches.length;
+  const cw = {no: 76, nm: 320, pr: 120, pk: 120, tot: 190, ju: 130};
+  const mw = cw.pr + cw.pk;
+  const tableW = cw.no + cw.nm + n * mw + cw.tot + cw.ju;
+  const hh = 56, rh = 60, pad = 24;
+  const tableH = hh * 3 + rows.length * rh;
+  const c = document.createElement('canvas');
+  c.width = tableW + pad * 2; c.height = tableH + pad * 2;
+  const x = c.getContext('2d');
+  x.fillStyle = '#FFFFFF'; x.fillRect(0, 0, c.width, c.height);
+  x.translate(pad, pad);
+
+  function cell(x0, y0, w, h, fill, text, weight, size){
+    x.fillStyle = fill; x.fillRect(x0, y0, w, h);
+    x.strokeStyle = '#000'; x.lineWidth = 1.5; x.strokeRect(x0, y0, w, h);
+    if (text !== '' && text != null){
+      x.fillStyle = '#000'; x.textAlign = 'center'; x.textBaseline = 'middle';
+      const s = fitText(x, String(text), w - 16, weight, size, 16);
+      x.fillText(s, x0 + w / 2, y0 + h / 2 + 1);
+    }
+  }
+
+  const xm = cw.no + cw.nm;
+  const xt = xm + n * mw;
+  const xj = xt + cw.tot;
+  cell(0, 0, cw.no, hh * 3, '#D9D9D9', 'No', 700, 28);
+  cell(cw.no, 0, cw.nm, hh * 3, '#D9D9D9', 'Nama Tim', 700, 28);
+  cell(xm, 0, n * mw, hh, '#FFFF00', pageTitle(), 700, 30);
+  for (let i = 0; i < n; i++){
+    cell(xm + i * mw, hh, mw, hh, '#00B0F0', mapName(i).toUpperCase(), 700, 26);
+    cell(xm + i * mw, hh * 2, cw.pr, hh, '#00B0F0', 'P.Rank', 700, 24);
+    cell(xm + i * mw + cw.pr, hh * 2, cw.pk, hh, '#00B0F0', 'P.Kill', 700, 24);
+  }
+  cell(xt, 0, cw.tot, hh * 3, '#D9D9D9', 'Total Point', 700, 28);
+  cell(xj, 0, cw.ju, hh * 3, '#D9D9D9', 'Juara', 700, 28);
+
+  rows.forEach((r, i) => {
+    const y = hh * 3 + i * rh;
+    cell(0, y, cw.no, rh, '#D9D9D9', String(i + 1), 400, 26);
+    cell(cw.no, y, cw.nm, rh, '#FFFF00', r.name, 700, 28);
+    r.per.forEach((p, j) => {
+      cell(xm + j * mw, y, cw.pr, rh, '#F4B183', p.pr === '' ? '' : fmt(p.pr), 400, 26);
+      cell(xm + j * mw + cw.pr, y, cw.pk, rh, '#F8CBAD', p.pk === '' ? '' : fmt(p.pk), 400, 26);
+    });
+    cell(xt, y, cw.tot, rh, '#FBE5D6', fmt(r.total), 700, 28);
+    cell(xj, y, cw.ju, rh, '#FFFF00', r.juara === '' ? '' : String(r.juara), 700, 28);
+  });
+  return c;
+}
+
+$('#imgBtn').addEventListener('click', () => {
+  if (!state.teams.length){ $('#imgOut').innerHTML = '<p class="scanmsg">Tambahkan tim dulu.</p>'; return; }
+  const url = drawSheet().toDataURL('image/png');
+  $('#imgOut').innerHTML =
+    `<img src="${url}" alt="Tabel hasil OPR" style="width:100%;border-radius:8px;margin-top:12px;border:1px solid var(--line)">
+     <div class="actions"><a href="${url}" download="hasil-opr.png"><button type="button" class="primary">Download gambar</button></a></div>
+     <p class="hint">Kalau tombol download nggak jalan, tahan lama gambarnya lalu pilih simpan.</p>`;
+});
+
+let resetArmed = false;
+$('#resetBtn').addEventListener('click', e => {
+  if (!resetArmed){
+    resetArmed = true; e.target.textContent = 'Yakin? Klik lagi untuk hapus semua';
+    setTimeout(() => { resetArmed = false; e.target.textContent = 'Reset semua'; }, 3000);
+    return;
+  }
+  resetArmed = false; e.target.textContent = 'Reset semua';
+  state.teams = []; state.matches = [{}]; state.names = [DEFAULT_MAPS[0]]; state.cur = 0;
+  $('#copyOut').hidden = true; $('#imgOut').innerHTML = ''; $('#scanOut').innerHTML = '';
+  refreshAll();
+});
+
+renderRules();
+refreshAll();
+</script>
+</body>
+</html>
